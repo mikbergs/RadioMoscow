@@ -66,11 +66,9 @@ namespace RadioSpotify
             int songDurationMs = (int)songDuration.TotalMilliseconds - offset;
             var durationMatch = _spotifyWrapper.SavedTracks.FindAll(x => x.Track.DurationMs == songDurationMs);
             //If there's >= track with matching duration, take out a random one.
-            if (durationMatch.Count != 0)
+            if (durationMatch.Count > 1)
             {
-                durationMatch.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
-                var match = durationMatch.FirstOrDefault();
-                return match.Track;
+                return pickRandomSong(durationMatch);
             }
 
             var orderedTracks = _spotifyWrapper.SavedTracks.OrderBy(x => x.Track.DurationMs);      
@@ -80,10 +78,27 @@ namespace RadioSpotify
             if (removedTracks < 0) removedTracks = 0;
             var closestMatch = getClosestMatch(orderedTracks.ElementAt(removedTracks), remainingTracks?.First(), songDurationMs);
 
-            //_spotifyWrapper.changeTrack(closestMatch.Track.Uri);
+            var multipleMatches = _spotifyWrapper.SavedTracks.FindAll(x => x.Track.DurationMs == closestMatch.Track.DurationMs);
+            if(multipleMatches.Count > 1)
+            {
+                return pickRandomSong(multipleMatches);
+            }
             return closestMatch.Track;
            
         }
+        /// <summary>
+        /// Get's a 'random' Track from a collection
+        /// </summary>
+        public FullTrack pickRandomSong(List<SavedTrack> tracks)
+        {
+            tracks.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+            var match = tracks.FirstOrDefault();
+            return match.Track;
+        }
+        /// <param name="shorterSong"></param>
+        /// <param name="longerSong"></param>
+        /// <param name="srSongDuration"></param>
+        /// <returns></returns>
         public SavedTrack getClosestMatch(SavedTrack shorterSong, SavedTrack longerSong, double srSongDuration)
         {
             var longerThan = longerSong.Track.DurationMs - srSongDuration;
