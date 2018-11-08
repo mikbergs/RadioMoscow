@@ -8,6 +8,10 @@ using SpotifyAPI.Web.Auth;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
 using System.Windows.Forms;
+using System.Threading;
+using System.Net;
+using System.Collections.Specialized;
+using System.Diagnostics;
 
 namespace RadioSpotify.API
 {
@@ -15,10 +19,20 @@ namespace RadioSpotify.API
     {
         private List<SavedTrack> _savedTracks;
         private static SpotifyWebAPI _spotify;
+        private static string _refreshToken;
+        private static bool responseRecieved;
+        private static DateTime _tokenCreated;
+        static HttpListener _httpListener = new HttpListener();
 
-        //private Device _activeDevice;
-        //public Device ActiveDevice { get; set; }
+        private static string _clientId = "XXXXXXXX"; //"";
+        private static string _secretId = "XXXXXXXX"; //"";
+
+        public delegate void TokenRefreshedHandler();
+        public event TokenRefreshedHandler OnTokenRefreshed;
+
         public SpotifyWebAPI Spotify { get { return _spotify; } }
+        public DateTime TokenCreated { get { return _tokenCreated; } }
+        //public String RefreshToken { get { return _refreshToken; } }
         public SpotifyAPIWrapper()
         {
             _spotify = new SpotifyWebAPI();
@@ -26,26 +40,57 @@ namespace RadioSpotify.API
             initSpotify();            
         }
         public List<SavedTrack> SavedTracks { get { return _savedTracks; } }
-        private async static void initSpotify()
-        {
-            WebAPIFactory webApiFactory = new WebAPIFactory(
-                "http://localhost",
-                8000,
-                "3ea2752e8d2a43368ab6cf9efc56a0c4",
-                Scope.UserReadPrivate | Scope.UserReadEmail | Scope.PlaylistReadPrivate | Scope.UserLibraryRead |
-                Scope.UserReadPrivate | Scope.UserFollowRead | Scope.UserReadBirthdate | Scope.UserTopRead | Scope.PlaylistReadCollaborative |
-                Scope.UserReadRecentlyPlayed | Scope.UserReadPlaybackState | Scope.UserModifyPlaybackState);
+        private static AutorizationCodeAuth auth;
 
-            try
+        public void RefreshSpotifyApi()
+        {
+            Token token = auth.RefreshToken(_refreshToken, _secretId);
+            _spotify.AccessToken = token.AccessToken;
+            _tokenCreated = token.CreateDate;
+            OnTokenRefreshed();
+
+        }
+        private static void initSpotify()
+        {
+            auth = new AutorizationCodeAuth();
+            
+            auth.ClientId = _clientId;
+            auth.Scope = Scope.UserReadPrivate | Scope.UserReadEmail | Scope.PlaylistReadPrivate | Scope.UserLibraryRead |
+                Scope.UserReadPrivate | Scope.UserFollowRead | Scope.UserReadBirthdate | Scope.UserTopRead | Scope.PlaylistReadCollaborative |
+                Scope.UserReadRecentlyPlayed | Scope.UserReadPlaybackState | Scope.UserModifyPlaybackState;
+            
+            auth.RedirectUri = "http://localhost:4002/";
+            auth.ShowDialog = true;
+            auth.StartHttpServer(4002);
+            auth.OnResponseReceivedEvent += Auth_OnResponseReceivedEvent;
+            auth.State = "123";
+            
+            
+            //auth.StartHttpServer();
+            auth.DoAuth();
+            Stopwatch connectionTimer = new Stopwatch();
+            while (!responseRecieved && connectionTimer.ElapsedMilliseconds < 10000)
             {
-                _spotify = await webApiFactory.GetWebApi();
+                ;
             }
-            catch (Exception ex)
+            //auth.StopHttpServer();
+        }
+
+        private static void Auth_OnResponseReceivedEvent(AutorizationCodeAuthResponse response)
+        {
+            
+            responseRecieved = false;
+            String payload = response.Code;
+            Token token = auth.ExchangeAuthCode(response.Code, _secretId);
+            _tokenCreated = token.CreateDate;
+            _refreshToken = token.RefreshToken;
+
+            _spotify = new SpotifyWebAPI
             {
-                MessageBox.Show("The program needs to be run in admin mode\n" + ex.Message);
-            }
-            if (_spotify == null)
-                return;
+                AccessToken = token.AccessToken,
+                TokenType = token.TokenType,
+            };
+            responseRecieved = true;            
         }
 
         public string GetSpecificTrackName(string trackId)
@@ -53,12 +98,14 @@ namespace RadioSpotify.API
             FullTrack track = _spotify.GetTrack(trackId);
             return track.Name;
         }
-        //Get's the currently playing track from spotify
-        public string GetTrackName()
+        //Get's the currently playing track and artist from spotify
+        public string GetTrackString()
         {
+            
             PlaybackContext track = _spotify.GetPlayingTrack();
+            SimpleArtist artist = track.Item.Artists.FirstOrDefault();
             if (track?.Item != null)
-                return track.Item.Name.ToString();
+                return artist.Name.ToString() + " - "+track.Item.Name.ToString();
             else
                 return "No track playing";
         }
@@ -106,6 +153,16 @@ namespace RadioSpotify.API
                 savedTracks = _spotify.GetSavedTracks(rest, offset);
                 _savedTracks.AddRange(savedTracks.Items);
             }
+        }
+        private static void getKeys()
+        {
+            _clientId = string.IsNullOrEmpty(_clientId)
+                ? Environment.GetEnvironmentVariable("SPOTIFY_CLIENT_ID")
+                : _clientId;
+
+            _secretId = string.IsNullOrEmpty(_secretId)
+                ? Environment.GetEnvironmentVariable("SPOTIFY_SECRET_ID")
+                : _secretId;
         }
     }
 }

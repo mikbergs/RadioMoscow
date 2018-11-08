@@ -24,7 +24,7 @@ namespace RadioSpotify
             menuFacade.OnPlaylistUpdate += new MenuFacade.PlaylistUpdateHandler(UpdateGUI);
             menuFacade.OnSpotifyUpdate += new MenuFacade.PlaylistUpdateHandler(UpdateSpotifyLabels);
             //Spotify labels
-            lblSpotifyStatusCaption.Text = menuFacade.SpotifyWrapper.GetPlaybackState() == true ? menuFacade.SpotifyWrapper.GetTrackName() : "not playing";
+            lblSpotifyStatusCaption.Text = menuFacade.SpotifyWrapper.GetPlaybackState() == true ? menuFacade.SpotifyWrapper.GetTrackString() : "not playing";
             //lblSpotifyConnectionStatus.Text = menuFacade.SpotifyWrapper.Spotify.GetPrivateProfile().Error?.Message;
 
             //SR labels
@@ -48,7 +48,7 @@ namespace RadioSpotify
         }
         private void UpdateSpotifyLabels()
         {
-            lblSpotifyStatusCaption.Text = menuFacade.SpotifyWrapper.GetPlaybackState() == true ? menuFacade.SpotifyWrapper.GetTrackName() : "not playing";
+            lblSpotifyStatusCaption.Text = menuFacade.SpotifyWrapper.GetPlaybackState() == true ? menuFacade.SpotifyWrapper.GetTrackString() : "not playing";
         }
         private void UpdateGUI()
         {            
@@ -106,16 +106,20 @@ namespace RadioSpotify
         private void OnTimedEvent(Object source, EventArgs e)
         {
             toolStripTime.Text = ("Radio Moscow's time zone is UTC+0.9999977... - " + DateTime.Now.AddSeconds(Constants.streamDelay));
-            if (!menuFacade.SpotifyWrapper.GetPlaybackState() && menuFacade.checkIfNewSongListed()) 
+            bool songStartPrepared = menuFacade.SongStartTask?.Status == TaskStatus.WaitingForActivation ? true : false;
+            bool songEndPrepared = menuFacade.SongEndTask?.Status == TaskStatus.WaitingForActivation ? true : false;
+
+            if ((!songStartPrepared && !songEndPrepared) && menuFacade.checkIfNewSongListed()) 
             {
                 UpdateGUI();
                 menuFacade.SetupAfterChannelChange(currentSong: menuFacade.SRPlaylist.Song, nextSong: menuFacade.SRPlaylist.NextSong);
             }
         }
 
-        private void btnSpotifyConnect_Click(object sender, EventArgs e)
+
+        private void btnChangeSong_Click(object sender, EventArgs e)
         {
-            menuFacade.SpotifyWrapper.GetPlaybackState();
+            menuFacade.SetupAfterChannelChange(menuFacade.SRPlaylist.PreviousSong, menuFacade.SRPlaylist.Song, menuFacade.SRPlaylist.NextSong);
         }
     }
 }

@@ -54,13 +54,14 @@
             this.lblSRPrevStopTime = new System.Windows.Forms.TextBox();
             this.btnChangeSRMode = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.toolStripTime = new System.Windows.Forms.ToolStripStatusLabel();
             this.lblNextReplacement = new System.Windows.Forms.TextBox();
             this.lblCurrentReplacement = new System.Windows.Forms.TextBox();
             this.lblPrevReplacement = new System.Windows.Forms.TextBox();
             this.btnPrevReplacement = new System.Windows.Forms.Button();
             this.btnCurrentReplacement = new System.Windows.Forms.Button();
             this.btnNextReplacement = new System.Windows.Forms.Button();
-            this.toolStripTime = new System.Windows.Forms.ToolStripStatusLabel();
+            this.btnChangeSong = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -282,6 +283,12 @@
             this.statusStrip1.TabIndex = 30;
             this.statusStrip1.Text = "statusStrip1";
             // 
+            // toolStripTime
+            // 
+            this.toolStripTime.Name = "toolStripTime";
+            this.toolStripTime.Size = new System.Drawing.Size(79, 17);
+            this.toolStripTime.Text = "toolStripTime";
+            // 
             // lblNextReplacement
             // 
             this.lblNextReplacement.Location = new System.Drawing.Point(179, 301);
@@ -342,16 +349,21 @@
             this.btnNextReplacement.Visible = false;
             this.btnNextReplacement.Click += new System.EventHandler(this.btnReplacement_Click);
             // 
-            // toolStripTime
+            // btnChangeSong
             // 
-            this.toolStripTime.Name = "toolStripTime";
-            this.toolStripTime.Size = new System.Drawing.Size(79, 17);
-            this.toolStripTime.Text = "toolStripTime";
+            this.btnChangeSong.Location = new System.Drawing.Point(308, 26);
+            this.btnChangeSong.Name = "btnChangeSong";
+            this.btnChangeSong.Size = new System.Drawing.Size(83, 23);
+            this.btnChangeSong.TabIndex = 31;
+            this.btnChangeSong.Text = "Change song";
+            this.btnChangeSong.UseVisualStyleBackColor = true;
+            this.btnChangeSong.Click += new System.EventHandler(this.btnChangeSong_Click);
             // 
             // MenuForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.ClientSize = new System.Drawing.Size(637, 226);
+            this.Controls.Add(this.btnChangeSong);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.lblCurrentReplacement);
             this.Controls.Add(this.lblNextReplacement);
@@ -429,6 +441,7 @@
         private System.Windows.Forms.Button btnCurrentReplacement;
         private System.Windows.Forms.Button btnNextReplacement;
         private System.Windows.Forms.ToolStripStatusLabel toolStripTime;
+        private System.Windows.Forms.Button btnChangeSong;
     }
 }
 

@@ -24,8 +24,9 @@ namespace RadioSpotify
         private FullTrack replacementTrack;
         private Channel currentChannel;
         private Playlist _srPlaylist;
-        private Task songStart;
-        private Task songEnd;
+        private Task _songStartTask;
+        private Task _songEndTask;
+        private Task refreshTokenTask;
         //private bool _spotifyPlaying = false;
         public event _WMPOCXEvents_PlayStateChangeEventHandler testEvent = delegate { };
         public TimerWrapper TimerWrapper { get { return _timerWrapper; } }
@@ -34,6 +35,8 @@ namespace RadioSpotify
         public Playlist SRPlaylist { get { return _srPlaylist; } }
         //public List<Channel> ChannelList { get; set; }
         public ChannelList ChannelList { get; set; }
+        public Task SongStartTask { get { return _songStartTask; } }
+        public Task SongEndTask { get { return _songEndTask; } }
         //public bool SpotifyPlaying { get { return _spotifyPlaying; } }
 
 
@@ -43,18 +46,22 @@ namespace RadioSpotify
         public event PlaylistUpdateHandler OnSpotifyUpdate;
 
         
+        
 
         public MenuFacade()
         {
             _spotifyWrapper = new SpotifyAPIWrapper();
+            _spotifyWrapper.OnTokenRefreshed += new SpotifyAPIWrapper.TokenRefreshedHandler(CreateScheduleForRefreshToken);
+            
             _sr = new SRApi();            
             _srPlaylist = new Playlist();
             _timerWrapper = new TimerWrapper();
             InitSRPlayer();
+            CreateScheduleForRefreshToken();
+
             _srPlaylist = _sr.GetPlaylist(132);
             ChannelList = _sr.GetChannels();
             _spotifyWrapper.GetSavedTracks();
-            
         }
         /// <summary>
         /// fetches an replacement song from the spotify saved tracks
@@ -104,8 +111,7 @@ namespace RadioSpotify
             var longerThan = longerSong.Track.DurationMs - srSongDuration;
             var shorterThan = srSongDuration - shorterSong.Track.DurationMs;
 
-            return longerThan < shorterThan ? longerSong : shorterSong;
-            
+            return longerThan < shorterThan ? longerSong : shorterSong;            
         }
         //Updates the playlist.
         public void UpdatePlaylist(Channel channel)
@@ -118,7 +124,6 @@ namespace RadioSpotify
         {
             currentChannel = channel;
             _srPlayer.URL = "http://sverigesradio.se/topsy/direkt/srapi/"+channel.Id+".mp3";
-//            _srPlayer.controls.play();
         }
 
         private void InitSRPlayer()
@@ -149,12 +154,17 @@ namespace RadioSpotify
         //Does the neccesary preparments when there's a track listed as comming.
         public void CreateScheduleForSongStart(Song song)
         {
-            replacementTrack = GetReplacementSong(song);           
-            songStart = _timerWrapper.ScheduleAction(ChangeToSpotify, song.StartTimeUTC,DateTime.Now.AddSeconds(Constants.streamDelay));
+            replacementTrack = GetReplacementSong(song);
+            _songStartTask = _timerWrapper.ScheduleAction(ChangeToSpotify, song.StartTimeUTC,DateTime.Now.AddSeconds(Constants.streamDelay));
         }
         public void CreateScheduleForSongEnd(Song song)
         {
-            songEnd = _timerWrapper.ScheduleAction(ChangeToSR, song.StopTimeUTC, DateTime.Now.AddSeconds(Constants.streamDelay));
+            _songEndTask = _timerWrapper.ScheduleAction(ChangeToSR, song.StopTimeUTC, DateTime.Now.AddSeconds(Constants.streamDelay));
+        }
+        //Sets up schedule for the token refreshment
+        public void CreateScheduleForRefreshToken()
+        {
+            refreshTokenTask = _timerWrapper.ScheduleAction(_spotifyWrapper.RefreshSpotifyApi, _spotifyWrapper.TokenCreated.AddMinutes(59), DateTime.Now);
         }
         
         //Change to SpotifyPlayback.
