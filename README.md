@@ -10,3 +10,7 @@ Packages used:
 * SpotifyAPI - https://johnnycrazy.github.io/SpotifyAPI-NET/
 
 * RestShartp - https://github.com/restsharp/RestSharp
+
+Future updates:
+* Nice localhost view
+* Choose playlists to include
