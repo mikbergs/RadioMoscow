@@ -11,6 +11,6 @@ Packages used:
 
 * RestShartp - https://github.com/restsharp/RestSharp
 
-Future updates:
+Future feature:
 * Nice localhost view
 * Choose playlists to include
