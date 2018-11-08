@@ -39,12 +39,6 @@ namespace RadioSpotify
             cbChannelSelector.ValueMember = "Id";
             cbChannelSelector.DropDownStyle = ComboBoxStyle.DropDownList;
 
-            //ComboBox for Spotify
-            //cbDeviceList.DataSource = menuFacade.SpotifyWrapper.Spotify.GetDevices().Devices;
-            //cbDeviceList.DisplayMember = "Name";
-            //cbDeviceList.ValueMember = "Id";
-            //cbDeviceList.DropDownStyle = ComboBoxStyle.DropDownList;
-            
         }
         private void UpdateSpotifyLabels()
         {
@@ -116,11 +110,11 @@ namespace RadioSpotify
             }
         }
 
-
         private void btnChangeSong_Click(object sender, EventArgs e)
         {
             menuFacade.SetupAfterChannelChange(menuFacade.SRPlaylist.PreviousSong, menuFacade.SRPlaylist.Song, menuFacade.SRPlaylist.NextSong);
         }
+
     }
 }
      

@@ -19,26 +19,11 @@ namespace RadioSpotify.API
         public DateTime StopTimeUTC { get; set; }
     }
 
-    //public class Channel
-    //{
-    //    public string Id { get; set; }
-    //    public string Name { get; set; }
-    //}
-
-    public class Playlist //: INotifyPropertyChanged
+    public class Playlist
     {
-        //private Song _song;
-        //private Song _previousSong;
         public Song PreviousSong { get; set; }
         public Song Song { get; set; }
         public Song NextSong { get; set; }
-        public Channel Channel { get; set; }
-
-           
-        //public event PropertyChangedEventHandler PropertyChanged;
-        //protected virtual void OnPropertyChanged(string propertyName)
-        //{
-        //    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        //}
+        public Channel Channel { get; set; }        
     }
 }

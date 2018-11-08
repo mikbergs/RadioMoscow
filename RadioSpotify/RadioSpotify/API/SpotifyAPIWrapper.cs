@@ -73,7 +73,7 @@ namespace RadioSpotify.API
             {
                 ;
             }
-            //auth.StopHttpServer();
+            auth.StopHttpServer();
         }
 
         private static void Auth_OnResponseReceivedEvent(AutorizationCodeAuthResponse response)
@@ -111,12 +111,20 @@ namespace RadioSpotify.API
         }
         public void ChangeTrack(string trackUri)
         {
-            ErrorResponse error = _spotify.ResumePlayback(uris: new List<string> { trackUri });
-            if(error.Error != null)
+            try
             {
-                AvailabeDevices devices = _spotify.GetDevices();
-                _spotify.ResumePlayback(deviceId: devices.Devices.FirstOrDefault().Id,uris: new List<string> { trackUri });
+                ErrorResponse error = _spotify.ResumePlayback(uris: new List<string> { trackUri });
+                if (error.Error != null)
+                {
+                    AvailabeDevices devices = _spotify.GetDevices();
+                    _spotify.ResumePlayback(deviceId: devices.Devices.FirstOrDefault().Id, uris: new List<string> { trackUri });
+                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            
         }
         public bool GetPlaybackState()
         {
@@ -133,18 +141,16 @@ namespace RadioSpotify.API
         {
             Paging<SavedTrack> savedTracks = new Paging<SavedTrack>();
            
-            //savedTracks.
             int offset = 0;
-            savedTracks = _spotify.GetSavedTracks(50);
-            //trackList = savedTracks.Items;
+            savedTracks = _spotify.GetSavedTracks(50);            
             int loops = savedTracks.Total / savedTracks.Limit;
             int rest = savedTracks.Total % savedTracks.Limit;
+
 
             //Fetch all saved tracks from spotify
             for (int i = 0; i < loops; ++i, offset += 50)
             {
-                savedTracks = _spotify.GetSavedTracks(50, offset);
-                
+                savedTracks = _spotify.GetSavedTracks(50, offset);                
                 _savedTracks.AddRange(savedTracks.Items);
             }
             //Fetch the ones from the modulo operation
@@ -164,5 +170,6 @@ namespace RadioSpotify.API
                 ? Environment.GetEnvironmentVariable("SPOTIFY_SECRET_ID")
                 : _secretId;
         }
+
     }
 }

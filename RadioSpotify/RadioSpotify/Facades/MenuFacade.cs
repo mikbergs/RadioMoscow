@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using RadioSpotify.API;
 using System.Media;
 using WMPLib;
+using System.Diagnostics;
 
 namespace RadioSpotify
 {
@@ -27,17 +28,17 @@ namespace RadioSpotify
         private Task _songStartTask;
         private Task _songEndTask;
         private Task refreshTokenTask;
-        //private bool _spotifyPlaying = false;
+        
         public event _WMPOCXEvents_PlayStateChangeEventHandler testEvent = delegate { };
         public TimerWrapper TimerWrapper { get { return _timerWrapper; } }
         public SpotifyAPIWrapper SpotifyWrapper { get  { return _spotifyWrapper; } }
         public WindowsMediaPlayer SRPlayer { get { return _srPlayer; } } 
         public Playlist SRPlaylist { get { return _srPlaylist; } }
-        //public List<Channel> ChannelList { get; set; }
+        
         public ChannelList ChannelList { get; set; }
         public Task SongStartTask { get { return _songStartTask; } }
         public Task SongEndTask { get { return _songEndTask; } }
-        //public bool SpotifyPlaying { get { return _spotifyPlaying; } }
+        
 
 
 
@@ -45,11 +46,15 @@ namespace RadioSpotify
         public event PlaylistUpdateHandler OnPlaylistUpdate;
         public event PlaylistUpdateHandler OnSpotifyUpdate;
 
-        
-        
 
         public MenuFacade()
         {
+            while (!checkIfSpotifyIsRunning())
+            {
+                var response = MessageBox.Show(null, "Start Spotify before starting Radio Moscow. Start Spotify and press OK\nor press cancel to exit.", "Error", MessageBoxButtons.OKCancel);
+                if (response.Equals(DialogResult.Cancel))
+                    Environment.Exit(0);
+            }
             _spotifyWrapper = new SpotifyAPIWrapper();
             _spotifyWrapper.OnTokenRefreshed += new SpotifyAPIWrapper.TokenRefreshedHandler(CreateScheduleForRefreshToken);
             
@@ -220,8 +225,7 @@ namespace RadioSpotify
             {
                 CreateScheduleForSongStart(song);
                 CreateScheduleForSongEnd(song);
-            }
-                
+            }                
                 return false;
         }
 
@@ -243,6 +247,8 @@ namespace RadioSpotify
             else if (nextSong != null)
                 CheckIfPlaying(nextSong);
         }
+
+        //Check if there's a new song listend on the SR API
         public bool checkIfNewSongListed()
         {
             var tempPlaylist = _sr.GetPlaylist(currentChannel.Id);
@@ -256,6 +262,17 @@ namespace RadioSpotify
                 return true;
             }
             return false;
+        }
+
+        private bool checkIfSpotifyIsRunning()
+        {
+            Process[] pname = Process.GetProcessesByName("spotify");
+            if (pname.Length == 0)
+            {
+                return false;
+            }
+            else
+                return true;
         }
     }
 }
