@@ -186,6 +186,7 @@ namespace RadioSpotify
                 while (!_spotifyWrapper.GetPlaybackState() || retries < 5)
                     retries++;
                 OnSpotifyUpdate();
+                _songStartTask = null;
             }
             catch (Exception e)
             {
@@ -201,6 +202,7 @@ namespace RadioSpotify
                 retries++;
             OnSpotifyUpdate();
             changeChannelonSRStream(currentChannel);
+            _songEndTask = null;
         }
         public bool CheckIfPlaying(Song song)
         {
@@ -212,6 +214,7 @@ namespace RadioSpotify
                 CreateScheduleForSongEnd(song);
                 replacementTrack = GetReplacementSong(song, (int)offset.TotalMilliseconds);
                 ChangeToSpotify();
+                CreateScheduleForSongEnd(song);
                 return true;
             }
             else if (result == 0) //the song starts now
@@ -219,6 +222,7 @@ namespace RadioSpotify
                 replacementTrack = GetReplacementSong(song);
                 CreateScheduleForSongEnd(song);
                 ChangeToSpotify();
+                CreateScheduleForSongEnd(song);
                 return true;    
             }
             else
