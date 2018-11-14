@@ -4,7 +4,7 @@ SR radio player that's changing the songs on the radio to songs from your saved 
 To compile the code and run the project you will need to get yourself a Client ID and a Client secret from Spotify.
 
 
-
+![radio_moscow_png](https://raw.githubusercontent.com/mikbergs/RadioMoscow/master/mainscreen.PNG)
 Packages used:
 
 * SpotifyAPI - https://johnnycrazy.github.io/SpotifyAPI-NET/
