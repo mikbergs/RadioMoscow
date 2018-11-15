@@ -24,8 +24,8 @@ namespace RadioSpotify.API
         private static DateTime _tokenCreated;
         
 
-        private static string _clientId = "3ea2752e8d2a43368ab6cf9efc56a0c4"; //this is
-        private static string _secretId = "57531c17ff964f8799443819e48d3840";
+        private static string _clientId = ""; //this is
+        private static string _secretId = "";
 
         public delegate void TokenRefreshedHandler();
         public event TokenRefreshedHandler OnTokenRefreshed;
