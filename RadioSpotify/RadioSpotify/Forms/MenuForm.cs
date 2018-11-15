@@ -18,6 +18,7 @@ namespace RadioSpotify
         MenuFacade menuFacade = new MenuFacade();
         public MenuForm()
         {
+            //_log.Info("Opening up the form...");
             InitializeComponent();
             menuFacade.SRPlayer.PlayStateChange += SRPlayer_PlayStateChange;
             menuFacade.TimerWrapper.Timer.Tick += OnTimedEvent;
@@ -115,6 +116,10 @@ namespace RadioSpotify
             menuFacade.SetupAfterChannelChange(menuFacade.SRPlaylist.PreviousSong, menuFacade.SRPlaylist.Song, menuFacade.SRPlaylist.NextSong);
         }
 
+        private void btnDebug_Click(object sender, EventArgs e)
+        {
+            menuFacade.SpotifyWrapper.ChangeTrack("spotify: track:2hu89E3V6LXHm46qfkLAVA");
+        }
     }
 }
      

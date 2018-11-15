@@ -12,11 +12,14 @@ using RadioSpotify.API;
 using System.Media;
 using WMPLib;
 using System.Diagnostics;
+using System.Reflection;
+using log4net;
 
 namespace RadioSpotify
 {
     public class MenuFacade
     {
+        private static readonly ILog _log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType); //logger
         //private static SpotifyWebAPI _spotify;
         private static SpotifyAPIWrapper _spotifyWrapper;
         private static SRApi _sr;
@@ -76,11 +79,14 @@ namespace RadioSpotify
         {
             var songDuration = song.StopTimeUTC - song.StartTimeUTC;
             int songDurationMs = (int)songDuration.TotalMilliseconds - offset;
+
+            _log.Info(String.Format("Get replacement for {0}, song duration: {1}", song.Title, songDurationMs));
+
             var durationMatch = _spotifyWrapper.SavedTracks.FindAll(x => x.Track.DurationMs == songDurationMs);
             //If there's >= track with matching duration, take out a random one.
             if (durationMatch.Count > 1)
             {
-                return pickRandomSong(durationMatch);
+                return PickRandomSong(durationMatch);
             }
 
             var orderedTracks = _spotifyWrapper.SavedTracks.OrderBy(x => x.Track.DurationMs);      
@@ -88,35 +94,42 @@ namespace RadioSpotify
             var remainingTracks = orderedTracks.SkipWhile(x => x.Track.DurationMs < songDurationMs);
             var removedTracks = orderedTracks.Count() - remainingTracks.ToList().Count() - 1;
             if (removedTracks < 0) removedTracks = 0;
-            var closestMatch = getClosestMatch(orderedTracks.ElementAt(removedTracks), remainingTracks?.First(), songDurationMs);
+            var closestMatch = GetClosestMatch(orderedTracks.ElementAt(removedTracks), remainingTracks?.First(), songDurationMs);
 
             var multipleMatches = _spotifyWrapper.SavedTracks.FindAll(x => x.Track.DurationMs == closestMatch.Track.DurationMs);
             if(multipleMatches.Count > 1)
             {
-                return pickRandomSong(multipleMatches);
+               
+                return PickRandomSong(multipleMatches);
             }
+
             return closestMatch.Track;
            
         }
         /// <summary>
         /// Get's a 'random' Track from a collection
         /// </summary>
-        public FullTrack pickRandomSong(List<SavedTrack> tracks)
+        public FullTrack PickRandomSong(List<SavedTrack> tracks)
         {
             tracks.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
             var match = tracks.FirstOrDefault();
+            _log.Info(String.Format("Picked random {0}, nr of matches {1}", match.Track.Uri, tracks.Count));
             return match.Track;
         }
         /// <param name="shorterSong"></param>
         /// <param name="longerSong"></param>
         /// <param name="srSongDuration"></param>
         /// <returns></returns>
-        public SavedTrack getClosestMatch(SavedTrack shorterSong, SavedTrack longerSong, double srSongDuration)
+        public SavedTrack GetClosestMatch(SavedTrack shorterSong, SavedTrack longerSong, double srSongDuration)
         {
             var longerThan = longerSong.Track.DurationMs - srSongDuration;
             var shorterThan = srSongDuration - shorterSong.Track.DurationMs;
+            
+            var result =  longerThan < shorterThan ? longerSong : shorterSong;
 
-            return longerThan < shorterThan ? longerSong : shorterSong;            
+            _log.Info(String.Format("GetClosestMatch: longerThan: {0}, shorterThan: {1}, result: {2}, srSongDuration: {3}", longerThan, shorterThan, result.Track.DurationMs,srSongDuration));
+            return result;
+
         }
         //Updates the playlist.
         public void UpdatePlaylist(Channel channel)
@@ -159,29 +172,33 @@ namespace RadioSpotify
         //Does the neccesary preparments when there's a track listed as comming.
         public void CreateScheduleForSongStart(Song song)
         {
+            _log.Info((String.Format("Create schefule for song start at: {0}", song.StartTimeUTC)));
             replacementTrack = GetReplacementSong(song);
             _songStartTask = _timerWrapper.ScheduleAction(ChangeToSpotify, song.StartTimeUTC,DateTime.Now.AddSeconds(Constants.streamDelay));
         }
         public void CreateScheduleForSongEnd(Song song)
         {
+            _log.Info((String.Format("Create schefule for song end at: {0}", song.StopTimeUTC)));
             _songEndTask = _timerWrapper.ScheduleAction(ChangeToSR, song.StopTimeUTC, DateTime.Now.AddSeconds(Constants.streamDelay));
         }
         //Sets up schedule for the token refreshment
         public void CreateScheduleForRefreshToken()
         {
-            refreshTokenTask = _timerWrapper.ScheduleAction(_spotifyWrapper.RefreshSpotifyApi, _spotifyWrapper.TokenCreated.AddMinutes(59), DateTime.Now);
+            _log.Info((String.Format("Creating refresh schedule at {0}", _spotifyWrapper.TokenCreated.AddMinutes(59))));
+            refreshTokenTask = _timerWrapper.ScheduleAction(_spotifyWrapper.RefreshSpotifyApi, _spotifyWrapper.TokenCreated.AddMinutes(59), DateTime.Now.AddSeconds(Constants.streamDelay));
         }
         
         //Change to SpotifyPlayback.
         private void ChangeToSpotify()
         {
+            _log.Info(String.Format("Changing to Spotify. Track URI: {0}",replacementTrack.Uri));
             try
             {
                 int retries = 0;
                 //ChangeStateSRPlayer();
                 _srPlayer.controls.stop();
+                //_spotifyWrapper.ChangeTrack("spotify: track:2hu89E3V6LXHm46qfkLAVA"); // en som inte "finns"
 
-                //_spotifyWrapper.ChangeTrack("spotify:track:6KOUGH6yvyWDbX1mgulkBM"); // en som inte "finns"
                 _spotifyWrapper.ChangeTrack(replacementTrack.Uri);
                 while (!_spotifyWrapper.GetPlaybackState() || retries < 5)
                     retries++;
@@ -196,6 +213,7 @@ namespace RadioSpotify
         }
         private void ChangeToSR()
         {
+            _log.Info(String.Format("Changing to SR. Channel: {0}",currentChannel.Name));
             var retries = 0;
             _spotifyWrapper.Spotify.PausePlayback();
             while (_spotifyWrapper.GetPlaybackState() || retries < 5)
@@ -207,6 +225,7 @@ namespace RadioSpotify
         public bool CheckIfPlaying(Song song)
         {
             var result = DateTime.Compare(song.StartTimeUTC, DateTime.Now.AddSeconds(Constants.streamDelay));
+            _log.Info(String.Format("Checking if SR is playing a song. Result: {0}",result));
             if (result < 0)
             {
                 //The song has already started

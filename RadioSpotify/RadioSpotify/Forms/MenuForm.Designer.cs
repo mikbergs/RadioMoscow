@@ -62,6 +62,7 @@
             this.btnCurrentReplacement = new System.Windows.Forms.Button();
             this.btnNextReplacement = new System.Windows.Forms.Button();
             this.btnChangeSong = new System.Windows.Forms.Button();
+            this.btnDebug = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -359,10 +360,21 @@
             this.btnChangeSong.UseVisualStyleBackColor = true;
             this.btnChangeSong.Click += new System.EventHandler(this.btnChangeSong_Click);
             // 
+            // btnDebug
+            // 
+            this.btnDebug.Location = new System.Drawing.Point(397, 26);
+            this.btnDebug.Name = "btnDebug";
+            this.btnDebug.Size = new System.Drawing.Size(83, 23);
+            this.btnDebug.TabIndex = 32;
+            this.btnDebug.Text = "Change song";
+            this.btnDebug.UseVisualStyleBackColor = true;
+            this.btnDebug.Click += new System.EventHandler(this.btnDebug_Click);
+            // 
             // MenuForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.ClientSize = new System.Drawing.Size(637, 226);
+            this.Controls.Add(this.btnDebug);
             this.Controls.Add(this.btnChangeSong);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.lblCurrentReplacement);
@@ -442,6 +454,7 @@
         private System.Windows.Forms.Button btnNextReplacement;
         private System.Windows.Forms.ToolStripStatusLabel toolStripTime;
         private System.Windows.Forms.Button btnChangeSong;
+        private System.Windows.Forms.Button btnDebug;
     }
 }
 

@@ -22,14 +22,14 @@ namespace RadioSpotify.API
         private static string _refreshToken;
         private static bool responseRecieved;
         private static DateTime _tokenCreated;
-        static HttpListener _httpListener = new HttpListener();
+        
 
-        private static string _clientId = ""; //this is
-        private static string _secretId = "";
+        private static string _clientId = "3ea2752e8d2a43368ab6cf9efc56a0c4"; //this is
+        private static string _secretId = "57531c17ff964f8799443819e48d3840";
 
         public delegate void TokenRefreshedHandler();
         public event TokenRefreshedHandler OnTokenRefreshed;
-
+        
         public SpotifyWebAPI Spotify { get { return _spotify; } }
         public DateTime TokenCreated { get { return _tokenCreated; } }
         //public String RefreshToken { get { return _refreshToken; } }
@@ -37,7 +37,7 @@ namespace RadioSpotify.API
         {
             _spotify = new SpotifyWebAPI();
             _savedTracks = new List<SavedTrack>();
-            getKeys();
+            //getKeys();
             initSpotify();            
         }
         public List<SavedTrack> SavedTracks { get { return _savedTracks; } }
